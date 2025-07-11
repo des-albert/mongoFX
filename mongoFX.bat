@@ -1,0 +1,1 @@
+javaw --enable-native-access=javafx.graphics --sun-misc-unsafe-memory-access=allow --module-path "E:\Java\javafx-sdk-24.0.1\lib" --add-modules javafx.controls,javafx.fxml -jar E:\Data\Kotlin\mongoFX\build\libs\\mongoFX-1.0-SNAPSHOT.jar
