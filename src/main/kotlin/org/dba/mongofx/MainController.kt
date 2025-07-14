@@ -45,6 +45,8 @@ class MainController {
     data class ProductCount(val product: String, val count: Int)
     data class AggregationResult(val product: String?, val count: Int)
 
+    lateinit var textFieldDate: TextField
+
     @FXML
     lateinit var buttonLoad: Button
 
@@ -127,6 +129,7 @@ class MainController {
                 textFieldProduct.text = config.product
                 textFieldFileName.text = config.fileName
                 textFieldCustomer.text = config.customer
+                textFieldDate.text = config.exportDate
                 textAreaResult.text = "Successfully loaded data for customer: ${config.customer}"
 
             } else {
