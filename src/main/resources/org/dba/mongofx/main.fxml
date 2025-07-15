@@ -61,4 +61,21 @@
                     text="Generate"/>
         </AnchorPane>
     </Tab>
+    <Tab text="Opportunity">
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="450.0" prefWidth="1000.0">
+            <Label layoutX="65.0" layoutY="35.0" style="-fx-font-weight: bold;" text="Opportunity Details"/>
+
+            <TextField fx:id="opeTextField" layoutX="224.0" layoutY="32.0" prefWidth="180.0"
+                       promptText="Enter Opportunity ID (OPE)"/>
+            <Button fx:id="opeSearchButton" layoutX="518.0" layoutY="29.0" onAction="#searchByOpe"
+                    text="Search by OPE"/>
+
+            <TableView fx:id="ucidTableView" layoutX="49.0" layoutY="95.0" prefHeight="200.0" prefWidth="530.0">
+                <columns>
+                    <TableColumn fx:id="ucidColumn" prefWidth="250.0" text="UCID"/>
+                    <TableColumn fx:id="exportDateColumn" prefWidth="279.0" text="Export Date"/>
+                </columns>
+            </TableView>
+        </AnchorPane>
+    </Tab>
 </TabPane>

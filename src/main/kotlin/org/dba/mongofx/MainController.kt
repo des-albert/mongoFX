@@ -43,8 +43,22 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 class MainController {
 
     data class ProductCount(val product: String, val count: Int)
+    data class UcidDetails(val ucid: String, val exportDate: String)
+    data class UcidOpeQueryResult(val ucid: String, val exportDate: String)
     data class AggregationResult(val product: String?, val count: Int)
 
+    @FXML
+    lateinit var exportDateColumn: TableColumn<UcidDetails, String>
+    @FXML
+    lateinit var ucidColumn: TableColumn<UcidDetails, String>
+    @FXML
+    lateinit var ucidTableView: TableView<UcidDetails>
+    @FXML
+    lateinit var opeSearchButton: Button
+    @FXML
+    lateinit var opeTextField: TextField
+
+    @FXML
     lateinit var textFieldDate: TextField
 
     @FXML
@@ -107,6 +121,9 @@ class MainController {
         productColumn.cellValueFactory = PropertyValueFactory("product")
         countColumn.cellValueFactory = PropertyValueFactory("count")
 
+        ucidColumn.cellValueFactory = PropertyValueFactory("ucid")
+        exportDateColumn.cellValueFactory = PropertyValueFactory("exportDate")
+
         val months = Month.entries.map { it.getDisplayName(TextStyle.FULL, Locale.ENGLISH) }
         monthComboBox.items = FXCollections.observableArrayList(months)
         yearTextField.text = LocalDate.now().year.toString()
@@ -136,7 +153,6 @@ class MainController {
                 textAreaResult.text = "No data found for UCID: $ucidToFind"
             }
         }
-
     }
 
     @FXML
@@ -327,6 +343,47 @@ class MainController {
             .filter { it.product != null }
             .map { ProductCount(it.product!!, it.count) } // Map to the TableView's data class
             .sortedByDescending { it.count } // Sort for better presentation
+    }
+
+    @FXML
+    fun searchByOpe() {
+        val opeToFind = opeTextField.text
+        if(opeToFind.isNotBlank()) {
+            opeSearchButton.isDisable = true
+            ucidTableView.items.clear()
+            ucidTableView.placeholder = Label("Loading details for OPE: $opeToFind...")
+
+            controllerScope.launch {
+                try {
+                    val results = withContext(Dispatchers.IO) {
+                        fetchUcidDetailsForOpe(opeToFind)
+                    }
+                    ucidTableView.items = FXCollections.observableArrayList(results)
+                    if (results.isEmpty()) {
+                        ucidTableView.placeholder = Label("No data found for OPE: $opeToFind.")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to fetch details for OPE: $opeToFind", e)
+                    ucidTableView.placeholder = Label("Error loading details. See logs for details.")
+                } finally {
+                    opeSearchButton.isDisable = false
+                }
+            }
+        }
+    }
+
+    private suspend fun fetchUcidDetailsForOpe(ope: String): List<UcidDetails> {
+        val mongoResults = MongoManage.collection
+            .withDocumentClass<UcidOpeQueryResult>()
+            .find(eq("ope", ope))
+            .projection(Projections.fields(
+                Projections.include("ucid", "exportDate"),
+
+            ))
+            .toList()
+        return mongoResults.map { result ->
+            UcidDetails(result.ucid, result.exportDate)
+        }.sortedByDescending { it.exportDate }
     }
 
     @FXML
