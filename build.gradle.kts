@@ -30,7 +30,7 @@ kotlin {
 }
 
 javafx {
-    version = "22"
+    version = "23.0.2"
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 
@@ -39,8 +39,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.10.2")
     implementation("org.slf4j:slf4j-simple:2.0.17")
-    implementation("org.apache.poi:poi:5.4.0")
-    implementation("org.apache.poi:poi-ooxml:5.4.0")
+    implementation("org.apache.logging.log4j:log4j-api:2.23.1")
+    implementation("org.apache.poi:poi:5.4.1")
+    implementation("org.apache.commons:commons-lang3:3.18.0")
+    implementation("org.apache.poi:poi-ooxml:5.4.1")
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 }

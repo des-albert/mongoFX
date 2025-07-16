@@ -38,6 +38,7 @@ import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
 import org.apache.poi.ss.usermodel.CellType
+import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
 class MainController {
@@ -46,15 +47,42 @@ class MainController {
     data class UcidDetails(val ucid: String, val exportDate: String)
     data class UcidOpeQueryResult(val ucid: String, val exportDate: String)
     data class AggregationResult(val product: String?, val count: Int)
+    data class Part(var quantity: Int, val sku: String, val description: String)
+
+    @FXML
+    lateinit var UCIDdirTextField: TextField
+
+    @FXML
+    lateinit var quantityColumn: TableColumn<Part, Int>
+
+    @FXML
+    lateinit var descriptionColumn: TableColumn<Part, String>
+
+    @FXML
+    lateinit var skuColumn: TableColumn<Part, String>
+
+    @FXML
+    lateinit var partTableView: TableView<Part>
+
+    @FXML
+    lateinit var scanButton: Button
+
+    @FXML
+    lateinit var UCIDFileTextField: TextField
+
 
     @FXML
     lateinit var exportDateColumn: TableColumn<UcidDetails, String>
+
     @FXML
     lateinit var ucidColumn: TableColumn<UcidDetails, String>
+
     @FXML
     lateinit var ucidTableView: TableView<UcidDetails>
+
     @FXML
     lateinit var opeSearchButton: Button
+
     @FXML
     lateinit var opeTextField: TextField
 
@@ -124,6 +152,11 @@ class MainController {
         ucidColumn.cellValueFactory = PropertyValueFactory("ucid")
         exportDateColumn.cellValueFactory = PropertyValueFactory("exportDate")
 
+        skuColumn.cellValueFactory = PropertyValueFactory("sku")
+        descriptionColumn.cellValueFactory = PropertyValueFactory("description")
+        quantityColumn.cellValueFactory = PropertyValueFactory("quantity")
+
+
         val months = Month.entries.map { it.getDisplayName(TextStyle.FULL, Locale.ENGLISH) }
         monthComboBox.items = FXCollections.observableArrayList(months)
         yearTextField.text = LocalDate.now().year.toString()
@@ -188,11 +221,12 @@ class MainController {
 
         for (filePath in excelFiles) {
             try {
-                val newConfig = parseConfigFromFile(filePath) ?: continue
+                val (newConfig, dirName) = parseConfigFromFile(filePath) ?: continue
 
                 MongoManage.collection.insertOne(newConfig)
                 logger.info("Successfully inserted config from: ${newConfig.fileName}")
 
+                moveFileToArchive(filePath, dirName)
 
                 withContext(Dispatchers.JavaFx) {
                     textAreaResult.appendText("Processed and archived: ${filePath.fileName}\n")
@@ -230,7 +264,7 @@ class MainController {
         }
     }
 
-    private fun parseConfigFromFile(filePath: Path): Config? {
+    private fun parseConfigFromFile(filePath: Path): Pair<Config, String>? {
         try {
             FileInputStream(filePath.toFile()).use { fis ->
                 XSSFWorkbook(fis).use { workbook ->
@@ -256,13 +290,13 @@ class MainController {
                     val archiveDir = Paths.get(archiveBasePath, dirName)
                     val isUnique = if (Files.isDirectory(archiveDir)) "0" else "1"
 
-                    moveFileToArchive(filePath, dirName)
 
                     // Return a new, immutable Config object
-                    return Config(
+                    val config = Config(
                         product = product, ucid = ucid, exportDate = exportDate, ope = ope,
                         customer = customer, fileName = fileName, unique = isUnique
                     )
+                    return config to dirName
                 }
             }
         } catch (e: IOException) {
@@ -277,7 +311,7 @@ class MainController {
         val year = yearTextField.text
 
         if (selectedMonthName.isNullOrBlank() || year.isNullOrBlank()) {
-            textAreaResult.text = "Please select a month and enter a year."
+            productTableView.placeholder = Label("Please select a month and enter a year")
             return
         }
 
@@ -321,7 +355,6 @@ class MainController {
                 Filters.and(
                     Filters.regex("exportDate", dateRegex),
                     Filters.type("product", BsonType.STRING),
-                    Filters.ne("product", null)
                 )
             ),
             // Stage 2: Group by the 'product' field and count the items in each group
@@ -348,7 +381,12 @@ class MainController {
     @FXML
     fun searchByOpe() {
         val opeToFind = opeTextField.text
-        if(opeToFind.isNotBlank()) {
+
+        if (opeToFind.isNullOrBlank()) {
+            ucidTableView.placeholder = Label("Please enter a UCID")
+            return
+        }
+        if (opeToFind.isNotBlank()) {
             opeSearchButton.isDisable = true
             ucidTableView.items.clear()
             ucidTableView.placeholder = Label("Loading details for OPE: $opeToFind...")
@@ -376,14 +414,77 @@ class MainController {
         val mongoResults = MongoManage.collection
             .withDocumentClass<UcidOpeQueryResult>()
             .find(eq("ope", ope))
-            .projection(Projections.fields(
-                Projections.include("ucid", "exportDate"),
-
-            ))
+            .projection(
+                Projections.fields(
+                    Projections.include("ucid", "exportDate"),
+                    Projections.excludeId()
+                )
+            )
             .toList()
         return mongoResults.map { result ->
             UcidDetails(result.ucid, result.exportDate)
         }.sortedByDescending { it.exportDate }
+    }
+
+    @FXML
+    fun scanFile() {
+        val searchList = listOf(
+            Part(quantity = 0, sku = "S4R96A", description = "XD685 DLC Server"),
+            Part(quantity = 0, sku = "P73361-B21", description = "EPYC 9455"),
+            Part(quantity = 0, sku = "P64986-H21", description = "64 GB"),
+            Part(quantity = 0, sku = "P64987-H21", description = "96 GB"),
+            Part(quantity = 0, sku = "P64988-H21", description = "128 GB"),
+            Part(quantity = 0, sku = "S4W08A", description = "NVIDIA HGX B300"),
+        )
+        val ucidFileName = UCIDFileTextField.text
+        val ucidDirName = UCIDdirTextField.text
+        if (ucidFileName.isNullOrBlank() || ucidDirName.isNullOrBlank()) {
+            partTableView.placeholder = Label("Please enter a UCID File")
+            return
+        }
+        scanButton.isDisable = true
+        partTableView.items.clear()
+        partTableView.placeholder = Label("Scanning $ucidFileName...")
+
+        controllerScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val ucidFilePath = Paths.get(archiveBasePath, ucidDirName, ucidFileName).toString() + ".xlsx"
+                    scanForParts(ucidFilePath, searchList)
+                }
+                val foundParts = searchList.filter { it.quantity > 0 }
+                partTableView.items = FXCollections.observableArrayList(foundParts)
+
+                if (foundParts.isEmpty()) {
+                    partTableView.placeholder = Label("No parts found in $ucidFileName")
+                }
+
+            } catch (e: Exception) {
+                logger.error("Error scanning file: $ucidFileName", e)
+            } finally {
+                scanButton.isDisable = false
+            }
+        }
+
+    }
+
+    private fun scanForParts(filePath: String, searchList: List<Part>) {
+        FileInputStream(filePath).use { inputStream ->
+            val workbook = WorkbookFactory.create(inputStream)
+            val sheet = workbook.getSheet("ExpertBOM")
+
+            sheet.forEach { row ->
+                val cell = row.getCell(2)
+                cell?.stringCellValue?.let { cellValue ->
+                    searchList.forEach { part ->
+                        if (cellValue.equals(part.sku, ignoreCase = true)) {
+                            val quantCell = row.getCell(1)
+                            part.quantity += quantCell.numericCellValue.toInt()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @FXML

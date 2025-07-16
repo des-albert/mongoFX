@@ -12,58 +12,84 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="650.0" styleClass="root" stylesheets="@../../../css/style.css" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.dba.mongofx.MainController">
+<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0"
+         prefWidth="650.0" styleClass="root" stylesheets="@../../../css/style.css" tabClosingPolicy="UNAVAILABLE"
+         xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="org.dba.mongofx.MainController">
     <Tab text="Main">
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="506.0" prefWidth="679.0">
-            <Button fx:id="buttonLoad" layoutX="341.0" layoutY="28.0" mnemonicParsing="false" onAction="#loadData" text="Load Data" />
-            <Button fx:id="buttonStore" layoutX="25.0" layoutY="403.0" mnemonicParsing="false" onAction="#storeConfigData" text="Store Configs" />
-            <Button fx:id="buttonQuit" layoutX="34.0" layoutY="455.0" mnemonicParsing="false" onAction="#quit" text="Quit" />
-            <TextField fx:id="textFieldUCID" layoutX="151.0" layoutY="30.0" promptText="ucid" />
-            <TextField fx:id="textFieldCustomer" layoutX="158.0" layoutY="86.0" prefHeight="25.0" prefWidth="460.0" />
-            <TextField fx:id="textFieldOPE" layoutX="158.0" layoutY="166.0" prefHeight="25.0" prefWidth="149.0" />
-            <TextField fx:id="textFieldFileName" layoutX="158.0" layoutY="247.0" prefHeight="25.0" prefWidth="460.0" />
-            <TextField fx:id="textFieldProduct" layoutX="158.0" layoutY="125.0" prefHeight="25.0" prefWidth="149.0" />
-            <Label layoutX="39.0" layoutY="90.0" stylesheets="@../../../css/style.css" text="Customer" />
-            <Label layoutX="40.0" layoutY="170.0" stylesheets="@../../../css/style.css" text="OPE" />
-            <Label layoutX="32.0" layoutY="251.0" prefHeight="18.0" prefWidth="63.0" text="fileName" />
-            <Label layoutX="40.0" layoutY="209.0" stylesheets="@../../../css/style.css" text="Date" />
+            <Button fx:id="buttonLoad" layoutX="341.0" layoutY="28.0" mnemonicParsing="false" onAction="#loadData"
+                    text="Load Data"/>
+            <Button fx:id="buttonStore" layoutX="25.0" layoutY="403.0" mnemonicParsing="false"
+                    onAction="#storeConfigData" text="Store Configs"/>
+            <Button fx:id="buttonQuit" layoutX="34.0" layoutY="455.0" mnemonicParsing="false" onAction="#quit"
+                    text="Quit"/>
+            <TextField fx:id="textFieldUCID" layoutX="151.0" layoutY="30.0" promptText="ucid"/>
+            <TextField fx:id="textFieldCustomer" layoutX="158.0" layoutY="86.0" prefHeight="25.0" prefWidth="460.0"/>
+            <TextField fx:id="textFieldOPE" layoutX="158.0" layoutY="166.0" prefHeight="25.0" prefWidth="149.0"/>
+            <TextField fx:id="textFieldFileName" layoutX="158.0" layoutY="247.0" prefHeight="25.0" prefWidth="460.0"/>
+            <TextField fx:id="textFieldProduct" layoutX="158.0" layoutY="125.0" prefHeight="25.0" prefWidth="149.0"/>
+            <Label layoutX="39.0" layoutY="90.0" stylesheets="@../../../css/style.css" text="Customer"/>
+            <Label layoutX="40.0" layoutY="170.0" stylesheets="@../../../css/style.css" text="OPE"/>
+            <Label layoutX="32.0" layoutY="251.0" prefHeight="18.0" prefWidth="63.0" text="fileName"/>
+            <Label layoutX="40.0" layoutY="209.0" stylesheets="@../../../css/style.css" text="Date"/>
             <Label layoutX="36.0" layoutY="22.0" text="mongoFX">
                 <font>
-                    <Font size="24.0" />
+                    <Font size="24.0"/>
                 </font>
             </Label>
-            <Label layoutX="40.0" layoutY="129.0" prefHeight="18.0" prefWidth="81.0" stylesheets="@../../../css/style.css" text="Product" />
-            <TextArea fx:id="textAreaResult" layoutX="158.0" layoutY="297.0" prefHeight="198.0" prefWidth="460.0" />
-            <TextField fx:id="textFieldDate" layoutX="158.0" layoutY="205.0" prefHeight="25.0" prefWidth="149.0" />
+            <Label layoutX="40.0" layoutY="129.0" prefHeight="18.0" prefWidth="81.0"
+                   stylesheets="@../../../css/style.css" text="Product"/>
+            <TextArea fx:id="textAreaResult" layoutX="158.0" layoutY="297.0" prefHeight="198.0" prefWidth="460.0"/>
+            <TextField fx:id="textFieldDate" layoutX="158.0" layoutY="205.0" prefHeight="25.0" prefWidth="149.0"/>
         </AnchorPane>
     </Tab>
 
     <Tab text="Summary">
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="450.0" prefWidth="1000.0">
-            <Label layoutX="46.0" layoutY="38.0" style="-fx-font-weight: bold;" text="Monthly Totals" />
+            <Label layoutX="46.0" layoutY="38.0" style="-fx-font-weight: bold;" text="Monthly Totals"/>
             <TableView fx:id="productTableView" layoutX="25.0" layoutY="102.0" prefHeight="380.0" prefWidth="607.0">
                 <columns>
-                    <TableColumn fx:id="productColumn" prefWidth="350.0" text="Product" />
-                    <TableColumn fx:id="countColumn" prefWidth="256.0" text="Total Configs" />
+                    <TableColumn fx:id="productColumn" prefWidth="350.0" text="Product"/>
+                    <TableColumn fx:id="countColumn" prefWidth="256.0" text="Total Configs"/>
                 </columns>
             </TableView>
-            <ComboBox fx:id="monthComboBox" layoutX="264.0" layoutY="34.0" prefWidth="150.0" promptText="Select Month" />
-            <TextField fx:id="yearTextField" layoutX="161.0" layoutY="34.0" prefWidth="70.0" promptText="Year" />
-            <Button fx:id="reportButton" layoutX="526.0" layoutY="32.0" onAction="#generateProductReport" text="Generate" />
+            <ComboBox fx:id="monthComboBox" layoutX="264.0" layoutY="34.0" prefWidth="150.0" promptText="Select Month"/>
+            <TextField fx:id="yearTextField" layoutX="161.0" layoutY="34.0" prefWidth="70.0" promptText="Year"/>
+            <Button fx:id="reportButton" layoutX="526.0" layoutY="32.0" onAction="#generateProductReport"
+                    text="Generate"/>
         </AnchorPane>
     </Tab>
     <Tab text="Opportunity">
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="450.0" prefWidth="1000.0">
-            <Label layoutX="65.0" layoutY="35.0" style="-fx-font-weight: bold;" text="Opportunity Details" />
-            <TextField fx:id="opeTextField" layoutX="224.0" layoutY="32.0" prefWidth="180.0" promptText="Enter Opportunity ID (OPE)" />
-            <Button fx:id="opeSearchButton" layoutX="518.0" layoutY="29.0" onAction="#searchByOpe" text="Search by OPE" />
+            <Label layoutX="65.0" layoutY="35.0" style="-fx-font-weight: bold;" text="Opportunity Details"/>
+            <TextField fx:id="opeTextField" layoutX="224.0" layoutY="32.0" prefWidth="180.0"
+                       promptText="Enter Opportunity ID (OPE)"/>
+            <Button fx:id="opeSearchButton" layoutX="518.0" layoutY="29.0" onAction="#searchByOpe"
+                    text="Search by OPE"/>
 
             <TableView fx:id="ucidTableView" layoutX="49.0" layoutY="95.0" prefHeight="200.0" prefWidth="530.0">
                 <columns>
-                    <TableColumn fx:id="ucidColumn" prefWidth="250.0" text="UCID" />
-                    <TableColumn fx:id="exportDateColumn" prefWidth="279.0" text="Export Date" />
+                    <TableColumn fx:id="ucidColumn" prefWidth="250.0" text="UCID"/>
+                    <TableColumn fx:id="exportDateColumn" prefWidth="279.0" text="Export Date"/>
                 </columns>
             </TableView>
+        </AnchorPane>
+    </Tab>
+    <Tab text="Parts">
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+            <TextField fx:id="UCIDFileTextField" layoutX="50.0" layoutY="68.0" prefHeight="25.0" prefWidth="527.0"
+                       promptText="UCID File"/>
+            <Button fx:id="scanButton" layoutX="362.0" layoutY="24.0" onAction="#scanFile" text="Scan UCID"/>
+            <TableView fx:id="partTableView" layoutX="50.0" layoutY="110.0" prefHeight="347.0" prefWidth="530.0">
+                <columns>
+                    <TableColumn fx:id="skuColumn" minWidth="0.0" prefWidth="170.0" text="SKU"/>
+                    <TableColumn fx:id="descriptionColumn" prefWidth="249.0" text="Description"/>
+                    <TableColumn fx:id="quantityColumn" prefWidth="109.0" text="Quantity"/>
+                </columns>
+            </TableView>
+            <TextField fx:id="UCIDdirTextField" layoutX="53.0" layoutY="26.0" prefHeight="25.0" prefWidth="145.0"
+                       promptText="UCID Directory"/>
         </AnchorPane>
     </Tab>
 </TabPane>
