@@ -12,7 +12,7 @@ class MainApplication : Application() {
 
         val fxmlLoader = FXMLLoader(MainApplication::class.java.getResource("main.fxml"))
         val scene = Scene(fxmlLoader.load(), 650.0, 550.0)
-        stage.title = "Hello!"
+        stage.title = "mongoFX"
         stage.scene = scene
         stage.show()
     }
