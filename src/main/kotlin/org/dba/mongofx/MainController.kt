@@ -430,10 +430,13 @@ class MainController {
     fun scanFile() {
         val searchList = listOf(
             Part(quantity = 0, sku = "S4R96A", description = "XD685 DLC Server"),
+            Part(quantity = 0, sku = "P73356-B21", description = "EPYC 9645"),
             Part(quantity = 0, sku = "P73361-B21", description = "EPYC 9455"),
             Part(quantity = 0, sku = "P64986-H21", description = "64 GB"),
             Part(quantity = 0, sku = "P64987-H21", description = "96 GB"),
             Part(quantity = 0, sku = "P64988-H21", description = "128 GB"),
+            Part(quantity = 0, sku = "S4X30A", description = "3.84 TB NVMe"),
+            Part(quantity = 0, sku = "P26253-B21", description = "BCM 57416 400 Gb"),
             Part(quantity = 0, sku = "S4W08A", description = "NVIDIA HGX B300"),
         )
         val ucidFileName = UCIDFileTextField.text
