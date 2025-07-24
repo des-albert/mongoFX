@@ -430,14 +430,19 @@ class MainController {
     fun scanFile() {
         val searchList = listOf(
             Part(quantity = 0, sku = "S4R96A", description = "XD685 DLC Server"),
+            Part(quantity = 0, sku = "P73359-B21", description = "EPYC 9535"),
             Part(quantity = 0, sku = "P73356-B21", description = "EPYC 9645"),
             Part(quantity = 0, sku = "P73361-B21", description = "EPYC 9455"),
             Part(quantity = 0, sku = "P64986-H21", description = "64 GB"),
             Part(quantity = 0, sku = "P64987-H21", description = "96 GB"),
             Part(quantity = 0, sku = "P64988-H21", description = "128 GB"),
             Part(quantity = 0, sku = "S4X30A", description = "3.84 TB NVMe"),
+            Part(quantity = 0, sku = "S4X32A", description = "7.68 TB NVMe"),
             Part(quantity = 0, sku = "P26253-B21", description = "BCM 57416 400 Gb"),
+            Part(quantity = 0, sku = "P45641-H23", description = "CX7 400 Gb"),
+            Part(quantity = 0, sku = "P66386-H21", description = "B3220 DPU"),
             Part(quantity = 0, sku = "S4W08A", description = "NVIDIA HGX B300"),
+            Part(quantity = 0, sku = "S3W20A", description = "NVIDIA HGX B200"),
         )
         val ucidFileName = UCIDFileTextField.text
         val ucidDirName = UCIDdirTextField.text
@@ -475,6 +480,7 @@ class MainController {
         FileInputStream(filePath).use { inputStream ->
             val workbook = WorkbookFactory.create(inputStream)
             val sheet = workbook.getSheet("ExpertBOM")
+    //        var serverCount = 1
 
             sheet.forEach { row ->
                 val cell = row.getCell(2)
@@ -482,6 +488,8 @@ class MainController {
                     searchList.forEach { part ->
                         if (cellValue.equals(part.sku, ignoreCase = true)) {
                             val quantCell = row.getCell(1)
+       //                     if (part.sku == "S4R96A")
+       //                         serverCount = quantCell.numericCellValue.toInt()
                             part.quantity += quantCell.numericCellValue.toInt()
                         }
                     }
