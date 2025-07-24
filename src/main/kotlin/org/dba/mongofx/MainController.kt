@@ -480,7 +480,7 @@ class MainController {
         FileInputStream(filePath).use { inputStream ->
             val workbook = WorkbookFactory.create(inputStream)
             val sheet = workbook.getSheet("ExpertBOM")
-    //        var serverCount = 1
+            var serverCount = 1
 
             sheet.forEach { row ->
                 val cell = row.getCell(2)
@@ -488,9 +488,9 @@ class MainController {
                     searchList.forEach { part ->
                         if (cellValue.equals(part.sku, ignoreCase = true)) {
                             val quantCell = row.getCell(1)
-       //                     if (part.sku == "S4R96A")
-       //                         serverCount = quantCell.numericCellValue.toInt()
-                            part.quantity += quantCell.numericCellValue.toInt()
+                            if (part.sku == "S4R96A")
+                                serverCount = quantCell.numericCellValue.toInt()
+                            part.quantity += quantCell.numericCellValue.toInt() / serverCount
                         }
                     }
                 }
