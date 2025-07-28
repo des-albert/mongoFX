@@ -39,7 +39,6 @@ import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
 import org.apache.poi.ss.usermodel.CellType
-import org.apache.poi.ss.usermodel.DataFormatter
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
@@ -510,7 +509,7 @@ class MainController {
 
 
         } catch (e: IOException) {
-            logger.error("Failed to load search list from file")
+            logger.error("Failed to load search list from file $e")
             return emptyList()
         }
 
