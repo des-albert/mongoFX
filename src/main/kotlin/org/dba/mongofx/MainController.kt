@@ -9,6 +9,7 @@ import javafx.application.Platform
 import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.scene.control.Button
+import javafx.scene.control.CheckBox
 import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.control.TableColumn
@@ -38,6 +39,7 @@ import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
 import org.apache.poi.ss.usermodel.CellType
+import org.apache.poi.ss.usermodel.DataFormatter
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
@@ -48,6 +50,9 @@ class MainController {
     data class UcidOpeQueryResult(val ucid: String, val exportDate: String)
     data class AggregationResult(val product: String?, val count: Int)
     data class Part(var quantity: Int, val sku: String, val description: String)
+
+    @FXML
+    lateinit var downloadCheckBox: CheckBox
 
     @FXML
     lateinit var UCIDdirTextField: TextField
@@ -135,7 +140,7 @@ class MainController {
     lateinit var reportButton: Button
 
     companion object {
-        val logger: Logger = LoggerFactory.getLogger(MainController::class.java)
+        val logger: Logger = LoggerFactory.getLogger("mongoFX")
     }
 
     private val controllerScope = CoroutineScope(Dispatchers.JavaFx + SupervisorJob())
@@ -428,39 +433,38 @@ class MainController {
 
     @FXML
     fun scanFile() {
-        val searchList = listOf(
-            Part(quantity = 0, sku = "S4R96A", description = "XD685 DLC Server"),
-            Part(quantity = 0, sku = "P73359-B21", description = "EPYC 9535"),
-            Part(quantity = 0, sku = "P73356-B21", description = "EPYC 9645"),
-            Part(quantity = 0, sku = "P73361-B21", description = "EPYC 9455"),
-            Part(quantity = 0, sku = "P64986-H21", description = "64 GB"),
-            Part(quantity = 0, sku = "P64987-H21", description = "96 GB"),
-            Part(quantity = 0, sku = "P64988-H21", description = "128 GB"),
-            Part(quantity = 0, sku = "S4X30A", description = "3.84 TB NVMe"),
-            Part(quantity = 0, sku = "S4X32A", description = "7.68 TB NVMe"),
-            Part(quantity = 0, sku = "P26253-B21", description = "BCM 57416 400 Gb"),
-            Part(quantity = 0, sku = "P45641-H23", description = "CX7 400 Gb"),
-            Part(quantity = 0, sku = "P66386-H21", description = "B3220 DPU"),
-            Part(quantity = 0, sku = "S4W08A", description = "NVIDIA HGX B300"),
-            Part(quantity = 0, sku = "S3W20A", description = "NVIDIA HGX B200"),
-        )
+        var searchList: List<Part> = emptyList()
+
         val ucidFileName = UCIDFileTextField.text
         val ucidDirName = UCIDdirTextField.text
-        if (ucidFileName.isNullOrBlank() || ucidDirName.isNullOrBlank()) {
+        if (ucidFileName.isBlank() || (!downloadCheckBox.isSelected && ucidDirName.isBlank())) {
             partTableView.placeholder = Label("Please enter a UCID File")
             return
         }
+
         scanButton.isDisable = true
         partTableView.items.clear()
         partTableView.placeholder = Label("Scanning $ucidFileName...")
 
         controllerScope.launch {
+            var foundParts: List<Part>
             try {
                 withContext(Dispatchers.IO) {
-                    val ucidFilePath = Paths.get(archiveBasePath, ucidDirName, ucidFileName).toString() + ".xlsx"
+                    searchList = loadSearchList()
+                    if (searchList.isEmpty()) {
+                        withContext(Dispatchers.JavaFx) {
+                            partTableView.placeholder = Label("Could not load parts list to scan")
+                        }
+                        return@withContext
+                    }
+                    val ucidFilePath = if (downloadCheckBox.isSelected) {
+                        downloadPath.resolve("$ucidFileName.xlsx").toString()
+                    } else {
+                        Paths.get(archiveBasePath, ucidDirName, "$ucidFileName.xlsx").toString()
+                    }
                     scanForParts(ucidFilePath, searchList)
                 }
-                val foundParts = searchList.filter { it.quantity > 0 }
+                foundParts = searchList.filter { it.quantity > 0 }
                 partTableView.items = FXCollections.observableArrayList(foundParts)
 
                 if (foundParts.isEmpty()) {
@@ -472,6 +476,42 @@ class MainController {
             } finally {
                 scanButton.isDisable = false
             }
+        }
+
+    }
+
+    @FXML
+    fun onUseDownloads() {
+        UCIDdirTextField.isDisable = downloadCheckBox.isSelected
+        if (!downloadCheckBox.isSelected) {
+            UCIDdirTextField.clear()
+            UCIDdirTextField.requestFocus()
+        }
+    }
+
+    private fun loadSearchList(): List<Part> {
+        val fileName = "/parts_to_scan.csv"
+        try {
+            val inputStream = MainController::class.java.getResourceAsStream(fileName)
+                ?: throw IOException("Resource not found: $fileName")
+
+            return inputStream.bufferedReader().useLines { lines ->
+                lines
+                    .filter { it.isNotBlank() }
+                    .mapNotNull { line ->
+                        val parts = line.split(',', limit = 2)
+                        if (parts.size == 2) {
+                            Part(quantity = 0, sku = parts[0].trim(), description = parts[1].trim())
+                        } else {
+                            null
+                        }
+                    }.toList()
+            }
+
+
+        } catch (e: IOException) {
+            logger.error("Failed to load search list from file")
+            return emptyList()
         }
 
     }
@@ -488,9 +528,13 @@ class MainController {
                     searchList.forEach { part ->
                         if (cellValue.equals(part.sku, ignoreCase = true)) {
                             val quantCell = row.getCell(1)
-                            if (part.sku == "S4R96A")
-                                serverCount = quantCell.numericCellValue.toInt()
-                            part.quantity += quantCell.numericCellValue.toInt() / serverCount
+                            if (quantCell != null && quantCell.cellType == CellType.NUMERIC) {
+                                val quantityValue = quantCell.numericCellValue.toInt()
+                                if (part.sku == "S4R96A") {
+                                    serverCount = if (quantityValue > 0) quantityValue else 1
+                                }
+                                part.quantity += quantityValue / serverCount
+                            }
                         }
                     }
                 }
@@ -503,4 +547,5 @@ class MainController {
         Platform.exit()
 
     }
+
 }
