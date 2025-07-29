@@ -391,28 +391,28 @@ class MainController {
             ucidTableView.placeholder = Label("Please enter a UCID")
             return
         }
-        if (opeToFind.isNotBlank()) {
-            opeSearchButton.isDisable = true
-            ucidTableView.items.clear()
-            ucidTableView.placeholder = Label("Loading details for OPE: $opeToFind...")
 
-            controllerScope.launch {
-                try {
-                    val results = withContext(Dispatchers.IO) {
-                        fetchUcidDetailsForOpe(opeToFind)
-                    }
-                    ucidTableView.items = FXCollections.observableArrayList(results)
-                    if (results.isEmpty()) {
-                        ucidTableView.placeholder = Label("No data found for OPE: $opeToFind.")
-                    }
-                } catch (e: Exception) {
-                    logger.error("Failed to fetch details for OPE: $opeToFind", e)
-                    ucidTableView.placeholder = Label("Error loading details. See logs for details.")
-                } finally {
-                    opeSearchButton.isDisable = false
+        opeSearchButton.isDisable = true
+        ucidTableView.items.clear()
+        ucidTableView.placeholder = Label("Loading details for OPE: $opeToFind...")
+
+        controllerScope.launch {
+            try {
+                val results = withContext(Dispatchers.IO) {
+                    fetchUcidDetailsForOpe(opeToFind)
                 }
+                ucidTableView.items = FXCollections.observableArrayList(results)
+                if (results.isEmpty()) {
+                    ucidTableView.placeholder = Label("No data found for OPE: $opeToFind.")
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to fetch details for OPE: $opeToFind", e)
+                ucidTableView.placeholder = Label("Error loading details. See logs for details.")
+            } finally {
+                opeSearchButton.isDisable = false
             }
         }
+
     }
 
     private suspend fun fetchUcidDetailsForOpe(ope: String): List<UcidDetails> {
@@ -433,7 +433,6 @@ class MainController {
 
     @FXML
     fun scanFile() {
-        var searchList: List<Part> = emptyList()
 
         val ucidFileName = UCIDFileTextField.text
         val ucidDirName = UCIDdirTextField.text
@@ -447,10 +446,9 @@ class MainController {
         partTableView.placeholder = Label("Scanning $ucidFileName...")
 
         controllerScope.launch {
-            var foundParts: List<Part>
             try {
-                withContext(Dispatchers.IO) {
-                    searchList = loadSearchList()
+                val foundParts = withContext(Dispatchers.IO) {
+                    val searchList = loadSearchList()
                     if (searchList.isEmpty()) {
                         withContext(Dispatchers.JavaFx) {
                             partTableView.placeholder = Label("Could not load parts list to scan")
@@ -463,8 +461,9 @@ class MainController {
                         Paths.get(archiveBasePath, ucidDirName, "$ucidFileName.xlsx")
                     }
                     scanForParts(ucidFilePath.toString(), searchList)
+                    searchList.filter { it.quantity > 0 }
                 }
-                foundParts = searchList.filter { it.quantity > 0 }
+
                 partTableView.items = FXCollections.observableArrayList(foundParts)
 
                 if (foundParts.isEmpty()) {
@@ -517,12 +516,14 @@ class MainController {
     }
 
     private fun scanForParts(filePath: String, searchList: List<Part>) {
-        FileInputStream(filePath).use { inputStream ->
+        Files.newInputStream(Paths.get(filePath)).use { inputStream ->
             val workbook = WorkbookFactory.create(inputStream)
             val sheet = workbook.getSheet("ExpertBOM") ?: return
             var serverCount = 1
 
-            sheet.forEach { row ->
+            for (rowIndex in 6..sheet.lastRowNum) {
+                val row = sheet.getRow(rowIndex) ?: continue
+
                 val skuCell = row.getCell(2)
                 val skuValue = dataFormatter.formatCellValue(skuCell).trim()
 
