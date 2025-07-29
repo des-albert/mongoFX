@@ -388,7 +388,7 @@ class MainController {
         val opeToFind = opeTextField.text
 
         if (opeToFind.isNullOrBlank()) {
-            ucidTableView.placeholder = Label("Please enter a UCID")
+            ucidTableView.placeholder = Label("Please enter an OPE to search")
             return
         }
 
@@ -437,7 +437,7 @@ class MainController {
         val ucidFileName = UCIDFileTextField.text
         val ucidDirName = UCIDdirTextField.text
         if (ucidFileName.isBlank() || (!downloadCheckBox.isSelected && ucidDirName.isBlank())) {
-            partTableView.placeholder = Label("Please enter a UCID File")
+            partTableView.placeholder = Label("Please provide all required information")
             return
         }
 
@@ -453,7 +453,7 @@ class MainController {
                         withContext(Dispatchers.JavaFx) {
                             partTableView.placeholder = Label("Could not load parts list to scan")
                         }
-                        return@withContext emptyList<Part>()
+                        return@withContext emptyList()
                     }
                     val ucidFilePath = if (downloadCheckBox.isSelected) {
                         downloadPath.resolve("$ucidFileName.xlsx")
@@ -472,6 +472,7 @@ class MainController {
 
             } catch (e: Exception) {
                 logger.error("Error scanning file: $ucidFileName", e)
+                partTableView.placeholder = Label("Error scanning file. See logs for details")
             } finally {
                 scanButton.isDisable = false
             }
@@ -496,12 +497,13 @@ class MainController {
 
             return inputStream.bufferedReader().useLines { lines ->
                 lines
-                    .filter { it.isNotBlank() }
+                    .filter { it.isNotBlank() && !it.startsWith("#") }
                     .mapNotNull { line ->
                         val parts = line.split(',', limit = 2)
                         if (parts.size == 2) {
                             Part(quantity = 0, sku = parts[0].trim(), description = parts[1].trim())
                         } else {
+                            logger.warn("Skipping malformed line in parts list: '$line'")
                             null
                         }
                     }.toList()
@@ -509,7 +511,7 @@ class MainController {
 
 
         } catch (e: IOException) {
-            logger.error("Failed to load search list from file $e")
+            logger.error("Failed to load search list from file $fileName", e)
             return emptyList()
         }
 
