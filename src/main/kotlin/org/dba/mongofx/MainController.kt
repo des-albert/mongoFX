@@ -143,6 +143,7 @@ class MainController {
     }
 
     private val controllerScope = CoroutineScope(Dispatchers.JavaFx + SupervisorJob())
+    private val dataFormatter = org.apache.poi.ss.usermodel.DataFormatter()
 
     val archiveBasePath =
         "C:\\Users\\albertd\\OneDrive - Hewlett Packard Enterprise\\HPE\\Early Quotes\\2025"
@@ -454,14 +455,14 @@ class MainController {
                         withContext(Dispatchers.JavaFx) {
                             partTableView.placeholder = Label("Could not load parts list to scan")
                         }
-                        return@withContext
+                        return@withContext emptyList<Part>()
                     }
                     val ucidFilePath = if (downloadCheckBox.isSelected) {
-                        downloadPath.resolve("$ucidFileName.xlsx").toString()
+                        downloadPath.resolve("$ucidFileName.xlsx")
                     } else {
-                        Paths.get(archiveBasePath, ucidDirName, "$ucidFileName.xlsx").toString()
+                        Paths.get(archiveBasePath, ucidDirName, "$ucidFileName.xlsx")
                     }
-                    scanForParts(ucidFilePath, searchList)
+                    scanForParts(ucidFilePath.toString(), searchList)
                 }
                 foundParts = searchList.filter { it.quantity > 0 }
                 partTableView.items = FXCollections.observableArrayList(foundParts)
@@ -518,22 +519,22 @@ class MainController {
     private fun scanForParts(filePath: String, searchList: List<Part>) {
         FileInputStream(filePath).use { inputStream ->
             val workbook = WorkbookFactory.create(inputStream)
-            val sheet = workbook.getSheet("ExpertBOM")
+            val sheet = workbook.getSheet("ExpertBOM") ?: return
             var serverCount = 1
 
             sheet.forEach { row ->
-                val cell = row.getCell(2)
-                cell?.stringCellValue?.let { cellValue ->
-                    searchList.forEach { part ->
-                        if (cellValue.equals(part.sku, ignoreCase = true)) {
-                            val quantCell = row.getCell(1)
-                            if (quantCell != null && quantCell.cellType == CellType.NUMERIC) {
-                                val quantityValue = quantCell.numericCellValue.toInt()
-                                if (part.sku == "S4R96A") {
-                                    serverCount = if (quantityValue > 0) quantityValue else 1
-                                }
-                                part.quantity += quantityValue / serverCount
+                val skuCell = row.getCell(2)
+                val skuValue = dataFormatter.formatCellValue(skuCell).trim()
+
+                if (skuValue.isNotBlank()) {
+                    searchList.find { it.sku.equals(skuValue, ignoreCase = true) }?.let { part ->
+                        val quantCell = row.getCell(1)
+                        if (quantCell != null && quantCell.cellType == CellType.NUMERIC) {
+                            val quantityValue = quantCell.numericCellValue.toInt()
+                            if (part.sku == "S4R96A") {
+                                serverCount = if (quantityValue > 0) quantityValue else 1
                             }
+                            part.quantity += quantityValue / serverCount
                         }
                     }
                 }
