@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="650.0" styleClass="root" stylesheets="@../../../css/style.css" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.dba.mongofx.MainController">
+<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="650.0" styleClass="root" stylesheets="@../../../css/style.css" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.dba.mongofx.MainController">
     <Tab text="Main">
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="506.0" prefWidth="679.0">
             <Button fx:id="buttonLoad" layoutX="341.0" layoutY="28.0" mnemonicParsing="false" onAction="#loadData" text="Load Data" />
@@ -80,6 +80,24 @@
             </TableView>
             <TextField fx:id="UCIDdirTextField" layoutX="53.0" layoutY="26.0" prefHeight="25.0" prefWidth="145.0" promptText="UCID Directory" />
          <CheckBox fx:id="downloadCheckBox" layoutX="227.0" layoutY="30.0" mnemonicParsing="false" onAction="#onUseDownloads" text="Downloads" />
+        </AnchorPane>
+    </Tab>
+
+    <Tab text="SKU Search">
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                <Label layoutX="14.0" layoutY="25.0" text="Product:" />
+                <ComboBox fx:id="productSearchComboBox" layoutX="75.0" layoutY="21.0" prefWidth="250.0" promptText="Select a Product" />
+                <Label layoutX="338.0" layoutY="25.0" text="SKU:" />
+                <TextField fx:id="skuSearchTextField" layoutX="371.0" layoutY="21.0" prefHeight="25.0" prefWidth="169.0" promptText="Enter SKU to find" />
+                <Button fx:id="searchProductSkuButton" layoutX="565.0" layoutY="19.0" onAction="#searchProductSku" text="Search" />
+                <TableView fx:id="skuResultsTableView" layoutX="14.0" layoutY="88.0" prefHeight="403.0" prefWidth="622.0">
+                    <columns>
+                        <TableColumn fx:id="skuUcidColumn" prefWidth="150.0" text="UCID" />
+                        <TableColumn fx:id="skuQuantityColumn" prefWidth="61.0" text="Quantity" />
+                        <TableColumn fx:id="skuFileNameColumn" prefWidth="489.0" text="File Name" />
+                    </columns>
+                </TableView>
+                <Label fx:id="skuSearchStatusLabel" layoutX="14.0" layoutY="60.0" text="Please select a product and enter a SKU to begin." />
         </AnchorPane>
     </Tab>
 </TabPane>

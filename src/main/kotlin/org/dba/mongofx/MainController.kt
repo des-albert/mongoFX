@@ -39,6 +39,7 @@ import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
 import org.apache.poi.ss.usermodel.CellType
+import org.apache.poi.ss.usermodel.DataFormatter
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
@@ -49,6 +50,32 @@ class MainController {
     data class UcidOpeQueryResult(val ucid: String, val exportDate: String)
     data class AggregationResult(val product: String?, val count: Int)
     data class Part(var quantity: Int, val sku: String, val description: String)
+    data class UcidInfo(val ucid: String, val fileName: String)
+    data class SkuSearchResult(val ucid: String, val fileName: String, val quantity: Int)
+
+    @FXML
+    lateinit var skuSearchStatusLabel: Label
+
+    @FXML
+    lateinit var skuQuantityColumn: TableColumn<SkuSearchResult, Int>
+
+    @FXML
+    lateinit var skuFileNameColumn: TableColumn<SkuSearchResult, String>
+
+    @FXML
+    lateinit var skuUcidColumn: TableColumn<SkuSearchResult, String>
+
+    @FXML
+    lateinit var skuResultsTableView: TableView<SkuSearchResult>
+
+    @FXML
+    lateinit var searchProductSkuButton: Button
+
+    @FXML
+    lateinit var skuSearchTextField: TextField
+
+    @FXML
+    lateinit var productSearchComboBox: ComboBox<String>
 
     @FXML
     lateinit var downloadCheckBox: CheckBox
@@ -73,7 +100,6 @@ class MainController {
 
     @FXML
     lateinit var UCIDFileTextField: TextField
-
 
     @FXML
     lateinit var exportDateColumn: TableColumn<UcidDetails, String>
@@ -143,11 +169,11 @@ class MainController {
     }
 
     private val controllerScope = CoroutineScope(Dispatchers.JavaFx + SupervisorJob())
-    private val dataFormatter = org.apache.poi.ss.usermodel.DataFormatter()
+    private val dataFormatter = DataFormatter()
 
     val archiveBasePath =
         "C:\\Users\\albertd\\OneDrive - Hewlett Packard Enterprise\\HPE\\Early Quotes\\2025"
-    val downloadPath = Paths.get("C:\\Users\\albertd\\Downloads")
+    val downloadPath: Path = Paths.get("C:\\Users\\albertd\\Downloads")
 
     @FXML
     fun initialize() {
@@ -161,10 +187,22 @@ class MainController {
         descriptionColumn.cellValueFactory = PropertyValueFactory("description")
         quantityColumn.cellValueFactory = PropertyValueFactory("quantity")
 
+        skuUcidColumn.cellValueFactory = PropertyValueFactory("ucid")
+        skuFileNameColumn.cellValueFactory = PropertyValueFactory("fileName")
+        skuQuantityColumn.cellValueFactory = PropertyValueFactory("quantity")
 
         val months = Month.entries.map { it.getDisplayName(TextStyle.FULL, Locale.ENGLISH) }
         monthComboBox.items = FXCollections.observableArrayList(months)
         yearTextField.text = LocalDate.now().year.toString()
+
+        controllerScope.launch {
+            productSearchComboBox.promptText = "Loading products ..."
+            val products = withContext(Dispatchers.IO) {
+                MongoManage.collection.distinct<String>("product", Filters.ne("product", null)).toList().sorted()
+            }
+            productSearchComboBox.items = FXCollections.observableArrayList(products)
+            productSearchComboBox.promptText = "Select a Product"
+        }
     }
 
     @FXML
@@ -367,7 +405,7 @@ class MainController {
             // Stage 3: Reshape the output to be more friendly
             Aggregates.project(
                 Projections.fields(
-                    Projections.computed("product", "\$_id"),
+                    Projections.computed("product", $$"$_id"),
                     Projections.include("count"),
                     Projections.excludeId()
                 )
@@ -544,6 +582,109 @@ class MainController {
             }
         }
     }
+
+    @FXML
+    fun searchProductSku() {
+        val selectedProduct = productSearchComboBox.value
+        val skuToSearch = skuSearchTextField.text
+
+        if (selectedProduct.isNullOrBlank() || skuToSearch.isNullOrBlank()) {
+            skuSearchStatusLabel.text = "Please select a product and enter a SKU to search"
+            return
+        }
+        searchProductSkuButton.isDisable = true
+        skuResultsTableView.items.clear()
+        skuSearchStatusLabel.text = "Finding UCIDs for selected product: $selectedProduct..."
+
+        controllerScope.launch {
+            try {
+                val searchResults = withContext(Dispatchers.IO) {
+                    val ucidInfoList = fetchUcidInfoForProduct(selectedProduct)
+                    val totalFiles = ucidInfoList.size
+                    val foundResults = mutableListOf<SkuSearchResult>()
+
+                    withContext(Dispatchers.JavaFx) {
+                        skuSearchStatusLabel.text = "Found $totalFiles files. Now scanning for SKU: $skuToSearch..."
+                    }
+
+                    ucidInfoList.forEachIndexed { index, ucidInfo ->
+                        withContext(Dispatchers.JavaFx) {
+                            skuSearchStatusLabel.text =
+                                "Scanning file ${index + 1} of $totalFiles: ${ucidInfo.fileName.substringAfterLast('\\')}"
+                        }
+                        val filePath = Paths.get(archiveBasePath, ucidInfo.fileName)
+                        if (Files.exists(filePath)) {
+                            val quantity = scanFileForSku(filePath.toString(), skuToSearch)
+                            if (quantity > 0) {
+                                foundResults.add(
+                                    SkuSearchResult(
+                                        ucidInfo.ucid,
+                                        ucidInfo.fileName,
+                                        quantity = quantity
+                                    )
+                                )
+                            }
+                        } else {
+                            logger.warn("File not found, skipping scan: $filePath")
+                        }
+                    }
+                    foundResults
+
+                }
+                skuResultsTableView.items = FXCollections.observableArrayList(searchResults)
+                if (searchResults.isEmpty()) {
+                    skuSearchStatusLabel.text = "SKU $skuToSearch not found in any files for product $selectedProduct"
+                } else {
+                    skuSearchStatusLabel.text = "Search Complete. Found SKU in ${searchResults.size}files."
+                }
+            } catch (e: Exception) {
+                logger.error("Error during Product / SKU search", e)
+                skuSearchStatusLabel.text = "Error during search. See logs for details."
+            } finally {
+                searchProductSkuButton.isDisable = false
+
+            }
+        }
+    }
+
+    private suspend fun fetchUcidInfoForProduct(product: String): List<UcidInfo> {
+        return MongoManage.collection
+            .withDocumentClass<UcidInfo>()
+            .find(eq("product", product))
+            .projection(
+                Projections.fields(
+                    Projections.include("ucid", "fileName"),
+                    Projections.excludeId()
+                )
+            )
+            .toList()
+    }
+
+    private fun scanFileForSku(filePath: String, skuToSearch: String): Int {
+        try {
+            Files.newInputStream(Paths.get(filePath)).use { inputStream ->
+                val workbook = WorkbookFactory.create(inputStream)
+                val sheet = workbook.getSheet("ExpertBOM") ?: return 0
+
+                for (rowIndex in 6..sheet.lastRowNum) {
+                    val row = sheet.getRow(rowIndex) ?: continue
+                    val skuCell = row.getCell(2)
+                    val skuValue = dataFormatter.formatCellValue(skuCell).trim()
+                    if (skuValue.equals(skuToSearch, ignoreCase = true)) {
+                        val quantCell = row.getCell(1)
+                        if (quantCell != null && quantCell.cellType == CellType.NUMERIC) {
+                            return quantCell.numericCellValue.toInt()
+                        }
+                    }
+                }
+            }
+
+        } catch (e: Exception) {
+            logger.error("Failed to scan file $filePath for SKU $skuToSearch", e)
+        }
+        return 0
+    }
+
 
     @FXML
     fun quit() {
