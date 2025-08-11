@@ -69,7 +69,7 @@
     </Tab>
     <Tab text="Parts">
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-            <TextField fx:id="UCIDFileTextField" layoutX="50.0" layoutY="68.0" prefHeight="25.0" prefWidth="527.0" promptText="UCID File" />
+            <TextField fx:id="ucidFileTextField" layoutX="50.0" layoutY="68.0" prefHeight="25.0" prefWidth="527.0" promptText="UCID File" />
             <Button fx:id="scanButton" layoutX="362.0" layoutY="24.0" onAction="#scanFile" text="Scan UCID" />
             <TableView fx:id="partTableView" layoutX="50.0" layoutY="110.0" prefHeight="347.0" prefWidth="530.0">
                 <columns>
@@ -78,7 +78,7 @@
                     <TableColumn fx:id="quantityColumn" prefWidth="109.0" text="Quantity" />
                 </columns>
             </TableView>
-            <TextField fx:id="UCIDdirTextField" layoutX="53.0" layoutY="26.0" prefHeight="25.0" prefWidth="145.0" promptText="UCID Directory" />
+            <TextField fx:id="ucidDirTextField" layoutX="53.0" layoutY="26.0" prefHeight="25.0" prefWidth="145.0" promptText="UCID Directory" />
          <CheckBox fx:id="downloadCheckBox" layoutX="227.0" layoutY="30.0" mnemonicParsing="false" onAction="#onUseDownloads" text="Downloads" />
         </AnchorPane>
     </Tab>

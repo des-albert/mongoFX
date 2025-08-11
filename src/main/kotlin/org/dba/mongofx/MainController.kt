@@ -81,7 +81,7 @@ class MainController {
     lateinit var downloadCheckBox: CheckBox
 
     @FXML
-    lateinit var UCIDdirTextField: TextField
+    lateinit var ucidDirTextField: TextField
 
     @FXML
     lateinit var quantityColumn: TableColumn<Part, Int>
@@ -99,7 +99,7 @@ class MainController {
     lateinit var scanButton: Button
 
     @FXML
-    lateinit var UCIDFileTextField: TextField
+    lateinit var ucidFileTextField: TextField
 
     @FXML
     lateinit var exportDateColumn: TableColumn<UcidDetails, String>
@@ -472,8 +472,8 @@ class MainController {
     @FXML
     fun scanFile() {
 
-        val ucidFileName = UCIDFileTextField.text
-        val ucidDirName = UCIDdirTextField.text
+        val ucidFileName = ucidFileTextField.text
+        val ucidDirName = ucidDirTextField.text
         if (ucidFileName.isBlank() || (!downloadCheckBox.isSelected && ucidDirName.isBlank())) {
             partTableView.placeholder = Label("Please provide all required information")
             return
@@ -520,10 +520,10 @@ class MainController {
 
     @FXML
     fun onUseDownloads() {
-        UCIDdirTextField.isDisable = downloadCheckBox.isSelected
+        ucidDirTextField.isDisable = downloadCheckBox.isSelected
         if (!downloadCheckBox.isSelected) {
-            UCIDdirTextField.clear()
-            UCIDdirTextField.requestFocus()
+            ucidDirTextField.clear()
+            ucidDirTextField.requestFocus()
         }
     }
 
