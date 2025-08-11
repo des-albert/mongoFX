@@ -17,7 +17,7 @@
     <Tab text="Main">
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="506.0" prefWidth="679.0">
             <Button fx:id="buttonLoad" layoutX="341.0" layoutY="28.0" mnemonicParsing="false" onAction="#loadData" text="Load Data" />
-            <Button fx:id="buttonStore" layoutX="25.0" layoutY="403.0" mnemonicParsing="false" onAction="#storeConfigData" text="Store Configs" />
+            <Button fx:id="buttonStore" layoutX="514.0" layoutY="28.0" mnemonicParsing="false" onAction="#storeConfigData" text="Store Configs" />
             <Button fx:id="buttonQuit" layoutX="34.0" layoutY="455.0" mnemonicParsing="false" onAction="#quit" text="Quit" />
             <TextField fx:id="textFieldUCID" layoutX="151.0" layoutY="30.0" promptText="ucid" />
             <TextField fx:id="textFieldCustomer" layoutX="158.0" layoutY="86.0" prefHeight="25.0" prefWidth="460.0" />
@@ -36,6 +36,7 @@
             <Label layoutX="40.0" layoutY="129.0" prefHeight="18.0" prefWidth="81.0" stylesheets="@../../../css/style.css" text="Product" />
             <TextArea fx:id="textAreaResult" layoutX="158.0" layoutY="297.0" prefHeight="198.0" prefWidth="460.0" />
             <TextField fx:id="textFieldDate" layoutX="158.0" layoutY="205.0" prefHeight="25.0" prefWidth="149.0" />
+         <Button fx:id="buttonPart" layoutX="34.0" layoutY="381.0" mnemonicParsing="false" onAction="#scanFile" text="Parts" />
         </AnchorPane>
     </Tab>
 

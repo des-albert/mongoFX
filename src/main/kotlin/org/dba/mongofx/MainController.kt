@@ -54,6 +54,9 @@ class MainController {
     data class SkuSearchResult(val ucid: String, val fileName: String, val quantity: Int)
 
     @FXML
+    lateinit var buttonPart: Button
+
+    @FXML
     lateinit var skuSearchStatusLabel: Label
 
     @FXML
@@ -164,6 +167,10 @@ class MainController {
     @FXML
     lateinit var reportButton: Button
 
+    lateinit var ucidFileName: String
+    lateinit var ucidDirName: String
+
+
     companion object {
         val logger: Logger = LoggerFactory.getLogger("mongoFX")
     }
@@ -224,6 +231,9 @@ class MainController {
                 textFieldCustomer.text = config.customer
                 textFieldDate.text = config.exportDate
                 textAreaResult.text = "Successfully loaded data for customer: ${config.customer}"
+
+                ucidDirName = config.fileName.split("\\").first()
+                ucidFileName = config.fileName.split("\\").last()
 
             } else {
                 textAreaResult.text = "No data found for UCID: $ucidToFind"
@@ -472,11 +482,13 @@ class MainController {
     @FXML
     fun scanFile() {
 
-        val ucidFileName = ucidFileTextField.text
-        val ucidDirName = ucidDirTextField.text
-        if (ucidFileName.isBlank() || (!downloadCheckBox.isSelected && ucidDirName.isBlank())) {
-            partTableView.placeholder = Label("Please provide all required information")
-            return
+        if (ucidFileName.isEmpty()) {
+            ucidFileName = ucidFileTextField.text
+            ucidDirName = ucidDirTextField.text
+            if (ucidFileName.isBlank() || (!downloadCheckBox.isSelected && ucidDirName.isBlank())) {
+                partTableView.placeholder = Label("Please provide all required information")
+                return
+            }
         }
 
         scanButton.isDisable = true
@@ -496,7 +508,10 @@ class MainController {
                     val ucidFilePath = if (downloadCheckBox.isSelected) {
                         downloadPath.resolve("$ucidFileName.xlsx")
                     } else {
-                        Paths.get(archiveBasePath, ucidDirName, "$ucidFileName.xlsx")
+                        if (ucidFileName.contains(".xlsx"))
+                            Paths.get(archiveBasePath, ucidDirName, ucidFileName)
+                        else
+                            Paths.get(archiveBasePath, ucidDirName, "$ucidFileName.xlsx")
                     }
                     scanForParts(ucidFilePath.toString(), searchList)
                     searchList.filter { it.quantity > 0 }
